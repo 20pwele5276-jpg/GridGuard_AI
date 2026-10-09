@@ -1,5 +1,6 @@
 import os
 
+import streamlit as st
 from dotenv import load_dotenv
 from groq import Groq
 
@@ -7,13 +8,25 @@ from groq import Groq
 load_dotenv()
 
 
+def get_groq_api_key():
+    key = os.getenv("GROQ_API_KEY")
+
+    if key:
+        return key
+
+    try:
+        return st.secrets.get("GROQ_API_KEY")
+    except Exception:
+        return None
+
+
 def answer_manual_question(question, evidence):
-    api_key = os.getenv("GROQ_API_KEY")
+    api_key = get_groq_api_key()
 
     if not api_key:
         return (
-            "Groq API key is missing. Add GROQ_API_KEY "
-            "to your .env file to enable explanations."
+            "Groq API key is missing. Configure GROQ_API_KEY "
+            "in your local .env file or deployment secrets."
         )
 
     if not evidence:
@@ -31,26 +44,24 @@ def answer_manual_question(question, evidence):
     prompt = f"""
 You are an electrical maintenance documentation assistant.
 
-User question:
+Question:
 {question}
 
-Evidence retrieved from equipment manuals:
+Evidence from the uploaded equipment manual:
 {evidence_text}
 
-Answer using the supplied evidence only.
+Answer using the provided evidence only.
 
 Include:
-1. A direct answer in simple language
-2. Relevant inspection checks mentioned in the evidence
-3. The source filename and page number for important claims
+1. A direct answer in simple language.
+2. Relevant checks mentioned in the manual.
+3. Source filenames and page numbers.
 
-If the evidence does not answer the question, say so clearly.
-Do not invent manufacturer instructions, equipment limits,
-or safety procedures.
+If the evidence is insufficient, say so clearly.
+Do not invent manufacturer instructions or safety limits.
 
-Treat your answer as informational support, not a confirmed
-diagnosis or authorization to perform electrical work.
-Recommend a qualified electrical professional where appropriate.
+This answer is informational support, not authorization
+to perform electrical work.
 """
 
     try:
@@ -69,5 +80,8 @@ Recommend a qualified electrical professional where appropriate.
 
         return response.choices[0].message.content
 
-    except Exception as error:
-        return f"Could not generate the explanation: {error}"
+    except Exception:
+        return (
+            "The explanation could not be generated. "
+            "Check your Groq API configuration and try again."
+        )
