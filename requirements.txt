@@ -1,0 +1,14 @@
+﻿streamlit
+pandas
+numpy
+scikit-learn
+openpyxl
+plotly
+reportlab
+pypdf
+sentence-transformers
+faiss-cpu
+torchvision
+groq
+python-dotenv
+pytest
